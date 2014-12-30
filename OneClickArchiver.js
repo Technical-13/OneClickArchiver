@@ -138,7 +138,7 @@ $(document).ready( function () {
 											indexpageids: 1,
 											format: 'json'
 											continue: ''
-										} ).done ( function ( responseSection ) {
+										} ).done( function ( responseSection ) {
 											var sectionContent = responseSection.query.pages[pageid].revisions[0]['*'];
 											$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
 	 
