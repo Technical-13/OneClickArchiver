@@ -2,7 +2,7 @@ $(document).ready( function () {
 	if ( ( $( '#ca-addsection' ).length > 0 ||
 		( $.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 &&
 		mw.config.get( 'wgAction' ) == 'view' ) ) &&
-		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories'  ) ) === -1 ) {
+		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
 		var request0 = {
 			action: 'query',
 			titles: mw.config.get( 'wgPageName' ),
@@ -14,6 +14,18 @@ $(document).ready( function () {
 		};
 		$.get( mw.config.get( 'wgScriptPath' ) + '/api.php', request0, function( response0 ) {
 			var content0 = response0.query.pages.revisions[0]['*'];
+
+			/* counter *///Get the counter value
+			var counterRegEx = new RegExp( '\\| *counter *= *(\\d+)' );
+			var counter = counterRegEx.exec( content0 );
+			counter = counter[1];
+	 
+			/* archiveName *///Get the archiveName value
+			var archiveNameRegEx = /\| *archive *= *(.*\%\(counter\)d.*?) *(-->)?/;
+			var archiveName = archiveNameRegEx.exec( content0 );
+			archiveName = archiveName[1];
+	 
+			/* headerlevel *///Get the headerlevel value or default to '2'
 			var headerLevelRegEx = new RegExp( '\\| *headerlevel *= *(\\d+)' );
 			var headerLevel = headerLevelRegEx.exec( content0 );
 			if ( headerLevel === null || headerLevel === undefined ) {
@@ -21,7 +33,40 @@ $(document).ready( function () {
 			} else {
 				headerLevel = parseInt( headerLevel[1] );
 			}
-			$( 'h' + headerLevel + ' span.mw-headline' ).each( function( i, v ) {
+	 
+			/* archiveheader *///Get the defined archive header to place on archive page if it doesn't exist
+			var archiveHeaderRegEx = new RegExp( '\\| *archiveheader *= *(\{\{[^\r\n]*\}\})' );
+			var archiveHeader = archiveHeaderRegEx.exec( content0 );
+			if ( archiveHeader[1] === null || archiveHeader[1] === undefined )) {
+				archiveHeader = "{{Aan}}";
+			} else {
+				archiveHeader = archiveHeader[1];
+			}
+	 
+			/* maxarchivesize *///Get the defined max archive size from template
+			var maxArchiveSizeRegEx = new RegExp( '\\| *maxarchivesize *= *(\\d+K?)' );
+			var maxArchiveSize = maxArchiveSizeRegEx.exec(content0);
+			if ( maxArchiveSize[1] === null || maxArchiveSize[1] === undefined ) {
+				maxArchiveSize[1] = parseInt(153600, 10);
+			} else if ( maxArchiveSize[1].slice( -1 ) == "K" && $.isNumeric( maxArchiveSize[1].slice( 0, maxArchiveSize[1].length-1 ) ) ) {
+				maxArchiveSize = parseInt(maxArchiveSize[1].slice(0, maxArchiveSize[1].length-1), 10)*1024;
+			} else if ( $.isNumeric( maxArchiveSize[1].slice() ) ) {
+				maxArchiveSize = parseInt( maxArchiveSize[1].slice(), 10 );
+			}
+	 
+			/* debug */// Table to report the values found.
+			if( mw.config.get( 'debug' ) === true ) {
+				mw.notify( $( '<table style="width: 100%;" border="1"><tr><th>Config</th><th>value</th></tr>' + 
+				'<tr><td>Counter</td><td style="text-align: center;">' + counter + '</td></tr>' + 
+				'<tr><td>Archive name</td><td style="text-align: center;">' + archiveName + '</td></tr>' + 
+				'<tr><td>Header Level</td><td style="text-align: center;">' + headerLevel + '</td></tr>' + 
+				'<tr><td>Archive header</td><td style="text-align: center;">' + archiveHeader + '</td></tr>' + 
+				'<tr><td>Max archive size</td><td style="text-align: center;">' + maxArchiveSize + '</td></tr>' + 
+				'</table>' ),
+				{ title: 'OneClickArchiver report!', tag: 'OCA', autoHide: false } );
+			}
+	 
+			$( 'h' + headerLevel + ' span.mw-headline' ).each( function( i, val ) {
 				var editSectionUrl = $( this ).parent().find( '.mw-editsection a:first' ).attr( 'href' );
 				var sectionReg = /&section=(.*)/;
 				var sectionRaw = sectionReg.exec( editSectionUrl );
@@ -29,7 +74,7 @@ $(document).ready( function () {
 					var section = parseInt( sectionRaw[1] );
 					if ( $( this ).parent().prop( 'tagName' ) == 'H' + headerLevel ) {
 	 
-						$( this ).parent( 'h' + headerLevel ).append( ' <div class="archiverDiv" style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + section +
+						$( this ).parent( 'h' + headerLevel ).append( ' <div style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + section +
 							'" href="#archiverLink" class="archiverLink">' + 'Archive' + '</a></div>' );
 	 
 						$( this ).parent( 'h' + headerLevel ).find( 'a.archiverLink' ).click( function() {
@@ -47,8 +92,6 @@ $(document).ready( function () {
 	 
 							$( '.arcProg' ).append( '<div>' + mHeaders + '</div>' );
 	 
-							var regexObject3 = new RegExp( '\\| *counter *= *(\\d+)' );
-							var counter = regexObject3.exec( content0 );
 							if ( counter === null || counter === undefined ) {
 								$( '.arcProg' ).remove();
 								$( '.overlay' ).remove();
@@ -56,16 +99,14 @@ $(document).ready( function () {
 							} else {
 								var archiveNum = counter[1];
 	 
-								var archiveNameReg = /\| *archive *= *(.*\%\(counter\)d.*?) *(-->)?/;
-								var archiveNameRegMatch = archiveNameReg.exec( content0 );
-								if ( archiveNameRegMatch === null || archiveNameRegMatch === undefined ) {
+								if ( archiveName === null || archiveName === undefined ) {
 									$( '.arcProg' ).remove();
 									$( '.overlay' ).remove();
 									alert( 'No archive name was detected on this page, so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 								} else {
 									var year = new Date().getFullYear();
 									var month = new Date().getMonth();
-	 
+ 
 									var rootBase = mw.config.get( 'wgPageName' )
 										.replace( /\/.*/g, '' )
 										.replace( /_/g, ' ' );
@@ -94,18 +135,16 @@ $(document).ready( function () {
 											titles: mw.config.get( 'wgPageName' ),
 											rvsection: section,
 											prop: 'revisions|info',
-											intoken: 'edit',
-											rvprop: 'content',
+											rvprop: "content",
 											indexpageids: 1,
-											dataType: 'xml',
-											format: 'xml'
+											format: 'json'
 										};
 	 
-										$.get( mw.config.get( 'wgScriptPath' ) + '/api.php', request5, function( response5 ) {
-	 
+										$.get(mw.config.get( 'wgScriptPath' )+"/api.php", request5, function( response5 ) {
+											var content5 = response5.query.pages[mw.config.get( 'wgArticleId' )]revisions[0]['*']
 											$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
 	 
-											var dnau = $( response5 ).find( 'rev' ).text().match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
+											var dnau = content5.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
 											if ( dnau === null || dnau === undefined ) {
 												var dnauDate = Date.now();
 												dnau = null;
@@ -118,9 +157,9 @@ $(document).ready( function () {
 											if ( dnauDate > Date.now() ) {
 												$( '.arcProg' ).remove();
 												$( '.overlay' ).remove();
-												alert( 'This section has been marked \"Do Not Archive Until\" " + dnau + ", so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
+												alert( 'This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 											} else {
-												var contentSection = '\n\n{{Clear}}\n' + $( response5 ).find( 'rev' ).text();
+												var contentSection = '\n\n{{Clear}}\n' + content5;
 	 
 												if ( dnau != null ) {
 													contentSection = contentSection.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
@@ -173,7 +212,7 @@ $(document).ready( function () {
 			$( archiverToggle ).click( function ( e ) {
 				e.preventDefault();
 				/* Toggle the archiveLinks */
-				$( 'div.archiverDiv' ).css( 'display', function (i, val) {
+				$( 'div.archiverDiv' ).css( 'display', function ( i, val ) {
 					return val === 'none' ? '' : 'none';
 				});
 				/* Toggle the toggle link */
@@ -181,7 +220,7 @@ $(document).ready( function () {
 					return val === linkTextD ? linkTextE : linkTextD;
 				});
 				/* Toggle the toggle description */
-				$( 'li#pt-OCA a' ).attr( 'title', function (i, val) {
+				$( 'li#pt-OCA a' ).attr( 'title', function ( i, val ) {
 					return val === linkDescD ? linkDescE : linkDescD;
 				});
 				/* Toggle default state */
