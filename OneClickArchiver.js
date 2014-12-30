@@ -27,7 +27,7 @@ $(document).ready( function () {
 	 
 			/* headerlevel *///Get the headerlevel value or default to '2'
 			var headerLevelRegEx = new RegExp( '\\| *headerlevel *= *(\\d+)' );
-			var headerLevel = headerLevelRegEx.exec(content0);
+			var headerLevel = headerLevelRegEx.exec( content0 );
 			if ( headerLevel === null || headerLevel === undefined ) {
 				headerLevel = 2;
 			} else {
@@ -69,7 +69,7 @@ $(document).ready( function () {
 			$( 'h' + headerLevel + ' span.mw-headline' ).each( function( i, val ) {
 				var editSectionUrl = $( this ).parent().find( '.mw-editsection a:first' ).attr( 'href' );
 				var sectionReg = /&section=(.*)/;
-				var sectionRaw = sectionReg.exec(editSectionUrl);
+				var sectionRaw = sectionReg.exec( editSectionUrl );
 				if ( sectionRaw != null && sectionRaw[1].indexOf( 'T' ) < 0 ) {
 					var section = parseInt( sectionRaw[1] );
 					if ( $( this ).parent().prop( 'tagName' ) == 'H' + headerLevel ) {
@@ -144,24 +144,24 @@ $(document).ready( function () {
 											var content5 = response5.query.pages[mw.config.get( 'wgArticleId' )]revisions[0]['*']
 											$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
 	 
-											var dnau = content5.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/); 
-											if (dnau === null || typeof(dnau) === 'undefined' ) {
+											var dnau = content5.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
+											if ( dnau === null || dnau === undefined ) {
 												var dnauDate = Date.now();
 												dnau = null;
 											} else {
 												dnau = dnau[1] + ':' + dnau[2] + ' ' + dnau[3] + ' ' + dnau[4] + ' ' + dnau[5];
-												var dnauDate = new Date(dnau);
+												var dnauDate = new Date( dnau );
 												dnauDate = dnauDate.valueOf();
 											}
 	 
-											if(dnauDate > Date.now()) {
+											if ( dnauDate > Date.now() ) {
 												$( '.arcProg' ).remove();
 												$( '.overlay' ).remove();
-												alert( 'This section has been marked \"Do Not Archive Until\" " + dnau + ", so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
+												alert( 'This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 											} else {
 												var contentSection = '\n\n{{Clear}}\n' + content5;
 	 
-												if(dnau != null) {
+												if ( dnau != null ) {
 													contentSection = contentSection.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
 												}
 												new mw.Api().postWithToken( 'edit', {
