@@ -2,6 +2,7 @@ $(document).ready( function () {
 	if ( ( $( '#ca-addsection' ).length > 0 ||
 		( $.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 &&
 		mw.config.get( 'wgAction' ) == 'view' ) ) &&
+		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
 		var request0 = {
 			action: 'query',
 			titles: mw.config.get( 'wgPageName' ),
