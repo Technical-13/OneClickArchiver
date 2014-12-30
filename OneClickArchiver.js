@@ -130,18 +130,19 @@ $(document).ready( function () {
 									} else {
 										$( '.arcProg' ).append( '<div>' + 'Archive name <span style="font-weight: normal; color: #036;">' + archiveName + '</span> <span style="color: darkgreen;">found</span>, ' + mSection + '</div>' );
 	 
+										var pageid = mw.config.get( 'wgArticleId' );
 										var request5 = {
 											action: 'query',
-											titles: mw.config.get( 'wgPageName' ),
+											pageids: pageid,
 											rvsection: section,
 											prop: 'revisions|info',
-											rvprop: "content",
+											rvprop: 'content',
 											indexpageids: 1,
 											format: 'json'
 										};
 	 
-										$.get(mw.config.get( 'wgScriptPath' )+"/api.php", request5, function( response5 ) {
-											var content5 = response5.query.pages[mw.config.get( 'wgArticleId' )]revisions[0]['*']
+										$.get( mw.config.get( 'wgScriptPath' ) + '/api.php', request5, function( response5 ) {
+											var content5 = response5.query.pages[pageid].revisions[0]['*'];
 											$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
 	 
 											var dnau = content5.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
