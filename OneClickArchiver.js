@@ -3,18 +3,18 @@ $(document).ready( function () {
 		( $.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 &&
 		mw.config.get( 'wgAction' ) == 'view' ) ) &&
 		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
-		var request0 = {
+		var pageid = mw.config.get( 'wgArticleId' );
+		new mw.Api().get( {
 			action: 'query',
-			titles: mw.config.get( 'wgPageName' ),
+			pageids: pageid,
 			rvsection: 0,
-			prop: 'revisions|info',
+			prop: [ 'revisions', 'info' ],
 			rvprop: "content",
 			indexpageids: 1,
-			format: 'json'
-		};
-		$.get( mw.config.get( 'wgScriptPath' ) + '/api.php', request0, function( response0 ) {
-			var content0 = response0.query.pages.revisions[0]['*'];
-
+			continue: ''
+		} ).done ( function ( response0 ) {
+			var content0 = response0.query.pages[pageid].revisions[0]['*'];
+			
 			/* counter *///Get the counter value
 			var counterRegEx = new RegExp( '\\| *counter *= *(\\d+)' );
 			var counter = counterRegEx.exec( content0 );
@@ -45,11 +45,11 @@ $(document).ready( function () {
 	 
 			/* maxarchivesize *///Get the defined max archive size from template
 			var maxArchiveSizeRegEx = new RegExp( '\\| *maxarchivesize *= *(\\d+K?)' );
-			var maxArchiveSize = maxArchiveSizeRegEx.exec(content0);
-			if ( maxArchiveSize[1] === null || maxArchiveSize[1] === undefined ) {
-				maxArchiveSize[1] = parseInt(153600, 10);
+			var maxArchiveSize = maxArchiveSizeRegEx.exec( content0 );
+			if ( maxArchiveSize === null || maxArchiveSize[1] === undefined ) {
+				maxArchiveSize = parseInt( 153600, 10 );
 			} else if ( maxArchiveSize[1].slice( -1 ) == "K" && $.isNumeric( maxArchiveSize[1].slice( 0, maxArchiveSize[1].length-1 ) ) ) {
-				maxArchiveSize = parseInt(maxArchiveSize[1].slice(0, maxArchiveSize[1].length-1), 10)*1024;
+				maxArchiveSize = parseInt( maxArchiveSize[1].slice( 0, maxArchiveSize[1].length-1 ), 10 )*1024;
 			} else if ( $.isNumeric( maxArchiveSize[1].slice() ) ) {
 				maxArchiveSize = parseInt( maxArchiveSize[1].slice(), 10 );
 			}
@@ -129,8 +129,7 @@ $(document).ready( function () {
 										alert( 'Archiving was aborted due to archive page name mismatch:\n\n\tFound:\t\t' + archiveName + '\n\tExpected:\t' + mw.config.get( 'wgPageName' ).replace( '_', ' ' ) + archiveSub + '\n\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 									} else {
 										$( '.arcProg' ).append( '<div>' + 'Archive name <span style="font-weight: normal; color: #036;">' + archiveName + '</span> <span style="color: darkgreen;">found</span>, ' + mSection + '</div>' );
-	 
-										var pageid = mw.config.get( 'wgArticleId' );
+										
 										var request5 = {
 											action: 'query',
 											pageids: pageid,
