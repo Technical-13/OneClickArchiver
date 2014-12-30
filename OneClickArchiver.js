@@ -136,7 +136,7 @@ $(document).ready( function () {
 											prop: [ 'revisions', 'info' ],
 											rvprop: 'content',
 											indexpageids: 1,
-											format: 'json'
+											format: 'json',
 											continue: ''
 										} ).done( function ( responseSection ) {
 											var sectionContent = responseSection.query.pages[pageid].revisions[0]['*'];
