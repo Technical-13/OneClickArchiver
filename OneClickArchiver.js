@@ -84,7 +84,7 @@ $(document).ready( function () {
 							var mPosting = '<span style="color: #040">Content retrieved,</span> performing edits...';
 							var mPosted = '<span style="color: #080">Archive appended...</span>';
 							var mCleared = '<span style="color: #080">Section cleared...</span>';
-							var mReloading = '<span style="color: #008">All done! </span>Reloading...';
+							var mReloading = '<span style="color: #008">All done! </span><a href="#archiverLink" onClick="javascript:location.reload();" title="Reload page">Reloading</a>...';
 	 
 							$( 'body' ).append( '<div class="overlay" style="background-color: #000; opacity: 0.4; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; z-index: 500;"></div>' );					
 	 
@@ -123,28 +123,26 @@ $(document).ready( function () {
 									var archiveSub = archiveName
 										.replace( /_/g, ' ' )
 										.replace( archiveBase, '' );
-									if( archiveBase != rootBase ) {
+									if ( archiveBase != rootBase ) {
 										$( '.arcProg' ).remove();
 										$( '.overlay' ).remove();
 										alert( 'Archiving was aborted due to archive page name mismatch:\n\n\tFound:\t\t' + archiveName + '\n\tExpected:\t' + mw.config.get( 'wgPageName' ).replace( '_', ' ' ) + archiveSub + '\n\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 									} else {
 										$( '.arcProg' ).append( '<div>' + 'Archive name <span style="font-weight: normal; color: #036;">' + archiveName + '</span> <span style="color: darkgreen;">found</span>, ' + mSection + '</div>' );
-										
-										var request5 = {
+										new mw.Api().get( {
 											action: 'query',
 											pageids: pageid,
 											rvsection: section,
-											prop: 'revisions|info',
+											prop: [ 'revisions', 'info' ],
 											rvprop: 'content',
 											indexpageids: 1,
 											format: 'json'
-										};
-	 
-										$.get( mw.config.get( 'wgScriptPath' ) + '/api.php', request5, function( response5 ) {
-											var content5 = response5.query.pages[pageid].revisions[0]['*'];
+											continue: ''
+										} ).done ( function ( responseSection ) {
+											var sectionContent = responseSection.query.pages[pageid].revisions[0]['*'];
 											$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
 	 
-											var dnau = content5.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
+											var dnau = sectionContent.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
 											if ( dnau === null || dnau === undefined ) {
 												var dnauDate = Date.now();
 												dnau = null;
@@ -159,7 +157,7 @@ $(document).ready( function () {
 												$( '.overlay' ).remove();
 												alert( 'This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
 											} else {
-												var contentSection = '\n\n{{Clear}}\n' + content5;
+												var contentSection = '\n\n{{Clear}}\n' + sectionContent;
 	 
 												if ( dnau != null ) {
 													contentSection = contentSection.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
@@ -174,7 +172,7 @@ $(document).ready( function () {
 													new mw.Api().postWithToken( 'edit', {
 														action: 'edit',
 														section: section,
-														title: mw.config.get( 'wgPageName' ),
+														pageids: pageid,
 														text: '',
 														summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) archived 1 discussion to [[' + archiveName + ']]',
 													} ).done( function() {
