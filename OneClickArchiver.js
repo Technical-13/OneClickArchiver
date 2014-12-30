@@ -37,7 +37,7 @@ $(document).ready( function () {
 			/* archiveheader *///Get the defined archive header to place on archive page if it doesn't exist
 			var archiveHeaderRegEx = new RegExp( '\\| *archiveheader *= *(\{\{[^\r\n]*\}\})' );
 			var archiveHeader = archiveHeaderRegEx.exec( content0 );
-			if ( archiveHeader[1] === null || archiveHeader[1] === undefined )) {
+			if ( archiveHeader[1] === null || archiveHeader[1] === undefined ) {
 				archiveHeader = "{{Aan}}";
 			} else {
 				archiveHeader = archiveHeader[1];
