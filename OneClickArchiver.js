@@ -145,7 +145,7 @@ $(document).ready( function () {
 						var sectionNumber = parseInt( sectionRaw[1] );
 						if ( $( this ).parent().prop( 'tagName' ) == 'H' + headerLevel ) {
  
-							$( this ).parent( 'h' + headerLevel ).append( ' <div style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + sectionNumber +
+							$( this ).parent( 'h' + headerLevel ).append( ' <div class="archiverDiv" style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + sectionNumber +
 								'" href="#archiverLink" class="archiverLink">' + 'Archive' + '</a></div>' );
  
 							$( this ).parent( 'h' + headerLevel ).find( 'a.archiverLink' ).click( function() {
