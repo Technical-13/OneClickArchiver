@@ -3,6 +3,7 @@ $(document).ready( function () {
 		$.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 ) &&
 		mw.config.get( 'wgAction' ) === 'view' &&
 		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
+		var OCAstate = mw.user.options.get( 'userjs-OCA-enabled', 'true' );
 		var pageid = mw.config.get( 'wgArticleId' );
 		var errorLog = {};
 		new mw.Api().get( {
@@ -113,7 +114,7 @@ $(document).ready( function () {
 				mw.notify( $( OCAreport ), { title: 'OneClickArchiver report!', tag: 'OCA', autoHide: true } );
 			}
  
-			if ( errorLog ) {
+			if ( errorLog && OCAstate === 'true' ) {
 				/* Temporary extra filtering */
 				if ( errorLog.counter || errorLog.archiveName ) {
 				/* Temporary extra filtering */
@@ -228,7 +229,6 @@ $(document).ready( function () {
 		var linkTextD = 'OCA - on', linkDescD = 'Disable OneClickArchiver on this page';
 		var linkTextE = 'OCA - off', linkDescE = 'Enable OneClickArchiver on this page';
 		var linkText = linkTextD, linkDesc = linkDescD;
-		var OCAstate = mw.user.options.get( 'userjs-OCA-enabled', 'true' );
 		if ( OCAstate === 'false' ) {
 			linkText = linkTextE, linkDesc = linkDescE;
 			$( 'div.archiverDiv' ).css( 'display', 'none' );
