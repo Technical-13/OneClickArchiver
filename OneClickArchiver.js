@@ -133,7 +133,7 @@ $(document).ready( function () {
 					OCAreport +=  '</td></tr><tr><td>Current<br />archive<br />size</td><td style="text-align: center;';
 					if ( errorLog.archivePageSize ) { OCAreport += ' background-color: #FFEEEE;">' + errorLog.archivePageSize; }
 						else { OCAreport += '">' + archivePageSize }
-					OCAreport +=  '</td></tr></table>';
+					OCAreport +=  '</td></tr><tr><td colspan="2" style="font-size: larger; text-align: center;"><a href="/wiki/User:Equazcion/OneClickArchiver" title="User:Equazcion/OneClickArchiver">Documentation</a></td></tr></table>';
 					mw.notify( $( OCAreport ), { title: 'OneClickArchiver report!', tag: 'OCA', autoHide: false } );
 				}
 	 
