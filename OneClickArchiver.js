@@ -15,7 +15,7 @@ $(document).ready( function () {
 			continue: ''
 		} ).done( function ( response0 ) {
 			var content0 = response0.query.pages[pageid].revisions[0]['*'];
-			
+ 
 			/* counter *///Get the counter value
 			var counterRegEx = new RegExp( '\\| *counter *= *(\\d+)' );
 			var counter = counterRegEx.exec( content0 );
@@ -26,7 +26,7 @@ $(document).ready( function () {
 				counter = counter[1];
 				var archiveNum = counter;
 			}
-			
+ 
 			/* archiveName *///Get the archiveName value
 			var archiveNameRegEx = /\| *archive *= *(.*\%\(counter\)d.*?) *(-->)?/;
 			var archiveName = archiveNameRegEx.exec( content0 );
@@ -39,7 +39,7 @@ $(document).ready( function () {
 			} else {
 				var year = new Date().getFullYear();
 				var month = new Date().getMonth();
-
+ 
 				var archiveName = archiveName[1]
 					.replace( /\| *archive *= */, '' )
 					.replace( /\%\(year\)d/g, year)
@@ -58,7 +58,7 @@ $(document).ready( function () {
 					errorLog.archiveName += '<br />Expected: ' + rootBase.replace( '_', ' ' ) + archiveSub + '<br /><br />';
 				}
 			}
-	 
+ 
 			/* headerlevel *///Get the headerlevel value or default to '2'
 			var headerLevelRegEx = new RegExp( '\\| *headerlevel *= *(\\d+)' );
 			var headerLevel = headerLevelRegEx.exec( content0 );
@@ -68,7 +68,7 @@ $(document).ready( function () {
 			} else {
 				headerLevel = parseInt( headerLevel[1] );
 			}
-	 
+ 
 			/* archiveheader *///Get the defined archive header to place on archive page if it doesn't exist
 			var archiveHeaderRegEx = new RegExp( '\\| *archiveheader *= *(\{\{[^\r\n]*\}\})' );
 			var archiveHeader = archiveHeaderRegEx.exec( content0 );
@@ -78,7 +78,7 @@ $(document).ready( function () {
 			} else {
 				archiveHeader = archiveHeader[1];
 			}
-	 
+ 
 			/* maxarchivesize *///Get the defined max archive size from template
 			var maxArchiveSizeRegEx = new RegExp( '\\| *maxarchivesize *= *(\\d+K?)' );
 			var maxArchiveSize = maxArchiveSizeRegEx.exec( content0 );
@@ -90,7 +90,7 @@ $(document).ready( function () {
 			} else if ( $.isNumeric( maxArchiveSize[1].slice() ) ) {
 				maxArchiveSize = parseInt( maxArchiveSize[1].slice(), 10 );
 			}
-	 
+ 
 			/* debug */// Table to report the values found.
 			if ( mw.config.get( 'debug' ) === true ) {
 				var OCAreport = '<table style="width: 100%;" border="1"><tr><th>Config</th><th>value</th></tr>';
@@ -112,7 +112,7 @@ $(document).ready( function () {
 				OCAreport +=  '</td></tr></table>';
 				mw.notify( $( OCAreport ), { title: 'OneClickArchiver report!', tag: 'OCA', autoHide: true } );
 			}
-			
+ 
 			if ( errorLog ) {
 				/* Temporary extra filtering */
 				if ( errorLog.counter || errorLog.archiveName ) {
@@ -121,21 +121,21 @@ $(document).ready( function () {
 				if ( errorLog.counter ) { OCAerror += '<b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Unable to find <b>|counter=</b><br />'; }
 				if ( errorLog.archiveName && errorLog.archiveName.search( 'defaulted to' ) !== -1 ) { OCAerror += '<b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Unable to find <b>|archive=</b><br />'; }
 				if ( errorLog.archiveName && errorLog.archiveName.search( 'mismatch' ) !== -1 ) { OCAerror += '<b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Archive name mismatch detected.<br />'; }
-				if ( errorLog.headerLevel ) { OCAerror += '&nbsp; Unable to find <b>|headerlevel=</b><br />'; }
-				if ( errorLog.archiveHeader ) { OCAerror += '&nbsp; Unable to find <b>|archiveheader=</b><br />'; }
-				if ( errorLog.maxArchiveSize ) { OCAerror += '&nbsp; Unable to find <b>|maxarchivesize=</b><br />'; }
+//				if ( errorLog.headerLevel ) { OCAerror += '&nbsp; Unable to find <b>|headerlevel=</b><br />'; }
+//				if ( errorLog.archiveHeader ) { OCAerror += '&nbsp; Unable to find <b>|archiveheader=</b><br />'; }
+//				if ( errorLog.maxArchiveSize ) { OCAerror += '&nbsp; Unable to find <b>|maxarchivesize=</b><br />'; }
 				if ( errorLog.counter || errorLog.archiveName ) { OCAerror += '<br /><b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Causing the script to abort.<br />'; }
 				OCAerror += '<br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Equazcion/OneClickArchiver" title="User:Equazcion/OneClickArchiver">the documentation</a> for details.</span></p>';
-				mw.notify( $( OCAerror ), { title: 'OneClickArchiver errors!', tag: 'OCAerr', autoHide: false } );
+				mw.notify( $( OCAerror ), { title: 'OneClickArchiver errors!', tag: 'OCAerr', autoHide: true } );
 				/* Temporary extra close for extra filtering */
 				}
 				/* Temporary extra close for extra filtering */
 			}
-
+ 
 			if ( errorLog.counter || errorLog.archiveName ) {
 				/* Abort script */
 			} else {
-			
+ 
 				$( 'h' + headerLevel + ' span.mw-headline' ).each( function( i, val ) {
 					var sectionName = $( this ).text();
 					var editSectionUrl = $( this ).parent().find( '.mw-editsection a:first' ).attr( 'href' );
@@ -144,25 +144,25 @@ $(document).ready( function () {
 					if ( sectionRaw != null && sectionRaw[1].indexOf( 'T' ) < 0 ) {
 						var sectionNumber = parseInt( sectionRaw[1] );
 						if ( $( this ).parent().prop( 'tagName' ) == 'H' + headerLevel ) {
-		 
+ 
 							$( this ).parent( 'h' + headerLevel ).append( ' <div style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + sectionNumber +
 								'" href="#archiverLink" class="archiverLink">' + 'Archive' + '</a></div>' );
-		 
+ 
 							$( this ).parent( 'h' + headerLevel ).find( 'a.archiverLink' ).click( function() {
-		 
+ 
 								var mHeaders = '<span style="color: #444;">Retrieving headers...</span>';
 								var mSection = 'retrieving section content...';
 								var mPosting = '<span style="color: #040">Content retrieved,</span> performing edits...';
 								var mPosted = '<span style="color: #080">Archive appended...</span>';
 								var mCleared = '<span style="color: #080">Section cleared...</span>';
 								var mReloading = '<span style="color: #008">All done! </span><a href="#archiverLink" onClick="javascript:location.reload();" title="Reload page">Reloading</a>...';
-		 
+ 
 								$( 'body' ).append( '<div class="overlay" style="background-color: #000; opacity: 0.4; position: fixed; top: 0px; left: 0px; width: 100%; height: 100%; z-index: 500;"></div>' );					
-		 
+ 
 								$( 'body' ).prepend( '<div class="arcProg" style="font-weight: bold; box-shadow: 7px 7px 5px #000; font-size: 0.9em; line-height: 1.5em; z-index: 501; opacity: 1; position: fixed; width: 50%; left: 25%; top: 30%; background: #F7F7F7; border: #222 ridge 1px; padding: 20px;"></div>' );
-		 
+ 
 								$( '.arcProg' ).append( '<div>' + mHeaders + '</div>' );
-		 
+ 
 								$( '.arcProg' ).append( '<div>' + 'Archive name <span style="font-weight: normal; color: #036;">' + archiveName + '</span> <span style="color: darkgreen;">found</span>, ' + mSection + '</div>' );
 								new mw.Api().get( {
 									action: 'query',
@@ -176,7 +176,7 @@ $(document).ready( function () {
 								} ).done( function ( responseSection ) {
 									var sectionContent = responseSection.query.pages[pageid].revisions[0]['*'];
 									$( '.arcProg' ).append( '<div>' + mPosting + '</div>' );
-
+ 
 									var dnau = sectionContent.match( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/ ); 
 									if ( dnau === null || dnau === undefined ) {
 										var dnauDate = Date.now();
@@ -186,14 +186,15 @@ $(document).ready( function () {
 										var dnauDate = new Date( dnau );
 										dnauDate = dnauDate.valueOf();
 									}
-
+ 
 									if ( dnauDate > Date.now() ) {
 										$( '.arcProg' ).remove();
 										$( '.overlay' ).remove();
-										alert( 'This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.\n\n\tSee User:Equazcion/OneClickArchiver for details.' );
+										var dnauAbortMsg = '<p>This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.<br /><br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Equazcion/OneClickArchiver" title="User:Equazcion/OneClickArchiver">the documentation</a> for details.</span></p>';
+										mw.notify( $( dnauAbortMsg ), { title: 'OneClickArchiver aborted!', tag: 'OCAdnau', autoHide: false } );
 									} else {
 										var contentSection = '\n\n{{Clear}}\n' + sectionContent;
-
+ 
 										if ( dnau != null ) {
 											contentSection = contentSection.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
 										}
