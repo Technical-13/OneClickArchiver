@@ -1,7 +1,7 @@
 $(document).ready( function () {
 	if ( ( $( '#ca-addsection' ).length > 0 ||
-		( $.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 &&
-		mw.config.get( 'wgAction' ) == 'view' ) ) &&
+		$.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 ) &&
+		mw.config.get( 'wgAction' ) === 'view' &&
 		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
 		var pageid = mw.config.get( 'wgArticleId' );
 		var errorLog = {};
@@ -137,14 +137,15 @@ $(document).ready( function () {
 			} else {
 			
 				$( 'h' + headerLevel + ' span.mw-headline' ).each( function( i, val ) {
+					var sectionName = $( this ).text();
 					var editSectionUrl = $( this ).parent().find( '.mw-editsection a:first' ).attr( 'href' );
 					var sectionReg = /&section=(.*)/;
 					var sectionRaw = sectionReg.exec( editSectionUrl );
 					if ( sectionRaw != null && sectionRaw[1].indexOf( 'T' ) < 0 ) {
-						var section = parseInt( sectionRaw[1] );
+						var sectionNumber = parseInt( sectionRaw[1] );
 						if ( $( this ).parent().prop( 'tagName' ) == 'H' + headerLevel ) {
 		 
-							$( this ).parent( 'h' + headerLevel ).append( ' <div style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + section +
+							$( this ).parent( 'h' + headerLevel ).append( ' <div style="font-size: 0.6em; font-weight: bold; float: right;"> | <a id="' + sectionNumber +
 								'" href="#archiverLink" class="archiverLink">' + 'Archive' + '</a></div>' );
 		 
 							$( this ).parent( 'h' + headerLevel ).find( 'a.archiverLink' ).click( function() {
@@ -166,7 +167,7 @@ $(document).ready( function () {
 								new mw.Api().get( {
 									action: 'query',
 									pageids: pageid,
-									rvsection: section,
+									rvsection: sectionNumber,
 									prop: [ 'revisions', 'info' ],
 									rvprop: 'content',
 									indexpageids: 1,
@@ -200,15 +201,15 @@ $(document).ready( function () {
 											action: 'edit',
 											title: archiveName,
 											appendtext: contentSection,
-											summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) adding 1 discussion'
-										} ).done( function() {
+											summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) adding [[' + archiveName + '#' + sectionName + '|' + sectionName + ']]'
+										} ).done( function( archived ) {
 											$( '.arcProg' ).append( '<div class="archiverPosted">' + mPosted + '</div>' );
 											new mw.Api().postWithToken( 'edit', {
 												action: 'edit',
-												section: section,
-												pageids: pageid,
+												section: sectionNumber,
+												pageid: pageid,
 												text: '',
-												summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) archived 1 discussion to [[' + archiveName + ']]',
+												summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) archived [[Special:Diff/' + archived.edit.newrevid + '|' + sectionName + ']] to [[' + archiveName + '#' + sectionName + '|' + archiveName + ']]'
 											} ).done( function() {
 												$( '.arcProg' ).append( '<div class="archiverCleared">' + mCleared + '</div>' );
 												$( '.arcProg' ).append( '<div>' + mReloading + '</div>' );
