@@ -1,3 +1,4 @@
+//<nowiki>
 $(document).ready( function () {
 	if ( ( $( '#ca-addsection' ).length > 0 ||
 		$.inArray( 'Non-talk pages that are automatically signed', mw.config.get( 'wgCategories' ) )  >= 0 ) &&
@@ -5,7 +6,7 @@ $(document).ready( function () {
 		$.inArray( 'Pages that should not be manually archived', mw.config.get( 'wgCategories' ) ) === -1 ) {
 		var OCAstate = mw.user.options.get( 'userjs-OCA-enabled', 'true' );
 		var pageid = mw.config.get( 'wgArticleId' );
-		var errorLog = {};
+		var errorLog = {errorCount: 0};
 		new mw.Api().get( {
 			action: 'query',
 			pageids: pageid,
@@ -22,6 +23,7 @@ $(document).ready( function () {
 			var counter = counterRegEx.exec( content0 );
 			if ( counter === null || counter === undefined ) {
 				counter = 1;
+				errorLog.errorCount++;
 				errorLog.counter = 'Counter<br />defaulted to<br /><br />' + counter;
 			} else {
 				counter = counter[1];
@@ -36,6 +38,7 @@ $(document).ready( function () {
 					.replace( /_/g, ' ' );// Replace underscores with spaces
 			if ( archiveName === null || archiveName === undefined ) {
 				archiveName = rootBase + '/Archive ' + counter;
+				errorLog.errorCount++;
 				errorLog.archiveName = 'Archive name<br />defaulted to<br /><br />' + archiveName;
 			} else {
 				var year = new Date().getFullYear();
@@ -43,11 +46,11 @@ $(document).ready( function () {
  
 				var archiveName = archiveName[1]
 					.replace( /\| *archive *= */, '' )
-					.replace( /\%\(year\)d/g, year)
-					.replace( /\%\(month\)d/g, month)
+					.replace( /\%\(year\)d/g, year )
+					.replace( /\%\(month\)d/g, month )
 					.replace( /\%\(monthname\)s/g, mw.config.get( 'wgMonthNames' )[month+1] )
 					.replace( /\%\(monthnameshort\)s/g, mw.config.get( 'wgMonthNamesShort' )[month+1] )
-					.replace( /\%\(counter\)d/g, archiveNum);
+					.replace( /\%\(counter\)d/g, archiveNum );
 				var archiveBase = archiveName
 					.replace( /\/.*/, '' )// Chop off the subpages
 					.replace( /_/g, ' ' );// Replace underscores with spaces
@@ -55,11 +58,13 @@ $(document).ready( function () {
 					.replace( /_/g, ' ' )// Replace underscores with spaces
 					.replace( archiveBase, '' );// Chop off the base pagename
 				if ( archiveBase != rootBase ) {
+					errorLog.errorCount++;
 					errorLog.archiveName = 'Archive name mismatch:<br /><br />Found: ' + archiveName;
 					errorLog.archiveName += '<br />Expected: ' + rootBase.replace( '_', ' ' ) + archiveSub + '<br /><br />';
 				}
 			}
 			
+			/* archivepagesize */// Get the size of the destination archive from the API
 			new mw.Api().get( {
 				action: 'query',
 				titles: archiveName,
@@ -72,31 +77,56 @@ $(document).ready( function () {
 			} ).done( function ( archivePageData ) {
 				var archivePageSize = 0;
 				if ( archivePageData.query.pages[-1] === undefined ) {
-					for ( var pageid in archivePageData.query.pages ) {
-						archivePageSize = parseInt( archivePageData.query.pages[pageid].revisions[0].size, 10 );
+					for ( var a in archivePageData.query.pages ) {
+						archivePageSize = parseInt( archivePageData.query.pages[a].revisions[0].size, 10 );
 					}
 				} else {
 					archivePageSize = -1;
-					errorLog.archivePageSize = '<a class="new" href="' + mw.util.wikiGetlink('Page name', {action:'edit', redlink:'1'}) + '" title="' + archiveName + '">' + archiveName + '</a>" does not exist.';
+					errorLog.errorCount++;
+					errorLog.archivePageSize = '<a class="new" href="' + mw.util.wikiGetlink( archiveName, { action:'edit', redlink:'1' } ) + '" title="' + archiveName + '">' + archiveName + '</a>" does not exist.';
 				}
  
-				/* maxarchivesize *///Get the defined max archive size from template
+				/* maxarchivesize */// Get the defined max archive size from template
 				var maxArchiveSizeRegEx = new RegExp( '\\| *maxarchivesize *= *(\\d+K?)' );
 				var maxArchiveSize = maxArchiveSizeRegEx.exec( content0 );
 				if ( maxArchiveSize === null || maxArchiveSize[1] === undefined ) {
 					maxArchiveSize = parseInt( 153600, 10 );
+					errorLog.errorCount++;
 					errorLog.maxArchiveSize = 'Maximum archive size defaulted to<br /><br />' + maxArchiveSize;
 				} else if ( maxArchiveSize[1].slice( -1 ) == "K" && $.isNumeric( maxArchiveSize[1].slice( 0, maxArchiveSize[1].length-1 ) ) ) {
 					maxArchiveSize = parseInt( maxArchiveSize[1].slice( 0, maxArchiveSize[1].length-1 ), 10 )*1024;
 				} else if ( $.isNumeric( maxArchiveSize[1].slice() ) ) {
 					maxArchiveSize = parseInt( maxArchiveSize[1].slice(), 10 );
 				}
+				
+				/* pslimit */// If maxArchiveSize is defined, and archivePageSize >= maxArchiveSize increment counter and redfine page name.
+				if ( !errorLog.maxArchiveSize && archivePageSize >= maxArchiveSize ) {
+					counter++;
+					archiveName = archiveNameRegEx.exec( content0 );
+					var archiveName = archiveName[1]
+						.replace( /\| *archive *= */, '' )
+						.replace( /\%\(year\)d/g, year )
+						.replace( /\%\(month\)d/g, month )
+						.replace( /\%\(monthname\)s/g, mw.config.get( 'wgMonthNames' )[month+1] )
+						.replace( /\%\(monthnameshort\)s/g, mw.config.get( 'wgMonthNamesShort' )[month+1] )
+						.replace( /\%\(counter\)d/g, counter );
+					var oldCounter = counterRegEx.exec( content0 );
+					var newCounter = '|counter=1';
+					if ( oldCounter !== null && oldCounter !== undefined ) {
+						newCounter = oldCounter[0].replace( oldCounter[1], counter );
+						oldCounter = oldCounter[0];
+					} else {
+						errorLog.errorCount++;
+						errorLog.newCounter = 'newCounter<br />defaulted to<br /><br />' + newCounter;
+					}
+				}
 	 
-				/* archiveheader *///Get the defined archive header to place on archive page if it doesn't exist
+				/* archiveheader */// Get the defined archive header to place on archive page if it doesn't exist
 				var archiveHeaderRegEx = new RegExp( '\\| *archiveheader *= *(\{\{[^\r\n]*\}\})' );
 				var archiveHeader = archiveHeaderRegEx.exec( content0 );
 				if ( archiveHeader === null || archiveHeader === undefined ) {
 					archiveHeader = "{{Aan}}";
+					errorLog.errorCount++;
 					errorLog.archiveHeader = 'Archive header<br />defaulted to<br /><br />' + archiveHeader;
 				} else {
 					archiveHeader = archiveHeader[1];
@@ -107,6 +137,7 @@ $(document).ready( function () {
 				var headerLevel = headerLevelRegEx.exec( content0 );
 				if ( headerLevel === null || headerLevel === undefined ) {
 					headerLevel = 2;
+					errorLog.errorCount++;
 					errorLog.headerLevel = 'Header level<br />defaulted to<br /><br />' + headerLevel;
 				} else {
 					headerLevel = parseInt( headerLevel[1] );
@@ -137,10 +168,7 @@ $(document).ready( function () {
 					mw.notify( $( OCAreport ), { title: 'OneClickArchiver report!', tag: 'OCA', autoHide: false } );
 				}
 	 
-				if ( errorLog && OCAstate === 'true' ) {
-					/* Temporary extra filtering */
-					if ( errorLog.counter || errorLog.archiveName ) {
-					/* Temporary extra filtering */
+				if ( ( errorLog.counter || errorLog.archiveName ) && OCAstate === 'true' ) {
 					var OCAerror = '<p>The following errors detected:<br />';
 					if ( errorLog.counter ) { OCAerror += '<b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Unable to find <b>|counter=</b><br />'; }
 					if ( errorLog.archiveName && errorLog.archiveName.search( 'defaulted to' ) !== -1 ) { OCAerror += '<b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Unable to find <b>|archive=</b><br />'; }
@@ -151,9 +179,6 @@ $(document).ready( function () {
 					if ( errorLog.counter || errorLog.archiveName ) { OCAerror += '<br /><b style="font-size: larger; color: #FF0000;">&bull;</b>&nbsp;Causing the script to abort.<br />'; }
 					OCAerror += '<br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Equazcion/OneClickArchiver" title="User:Equazcion/OneClickArchiver">the documentation</a> for details.</span></p>';
 					mw.notify( $( OCAerror ), { title: 'OneClickArchiver errors!', tag: 'OCAerr', autoHideSeconds: 30 } );
-					/* Temporary extra close for extra filtering */
-					}
-					/* Temporary extra close for extra filtering */
 				}
 	 
 				if ( ( errorLog.counter || errorLog.archiveName ) &&
@@ -218,17 +243,25 @@ $(document).ready( function () {
 											var dnauAbortMsg = '<p>This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.<br /><br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Equazcion/OneClickArchiver" title="User:Equazcion/OneClickArchiver">the documentation</a> for details.</span></p>';
 											mw.notify( $( dnauAbortMsg ), { title: 'OneClickArchiver aborted!', tag: 'OCAdnau', autoHide: false } );
 										} else {
-											var contentSection = '\n\n{{Clear}}\n' + sectionContent;
+											var archiveAction = 'adding';
+											if ( archivePageSize === -1 || ( archivePageSize >= maxArchiveSize && !errorLog.maxArchiveSize ) ) {
+												sectionContent = archiveHeader + '\n\n' + sectionContent;
+												archiveAction = 'creating'
+												mPosted = '<span style="color: #080">Archive created...</span>';
+											} else {
+												sectionContent = '\n\n{{Clear}}\n' + sectionContent;
+											}
 	 
 											if ( dnau != null ) {
-												contentSection = contentSection.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
+												sectionContent = sectionContent.replace( /<!-- \[\[User:DoNotArchiveUntil\]\] ([\d]{2}):([\d]{2}), ([\d]{1,2}) (January|February|March|April|May|June|July|August|September|October|November|December) ([\d]{4}) \(UTC\) -->/g, '' );
 											}
+											
 											new mw.Api().postWithToken( 'edit', {
 												action: 'edit',
 												title: archiveName,
-												appendtext: contentSection,
-												summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) adding [[' + archiveName + '#' + sectionName + '|' + sectionName + ']]'
-											} ).done( function( archived ) {
+												appendtext: sectionContent,
+												summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) ' + archiveAction + ' [[' + archiveName + '#' + sectionName + '|' + sectionName + ']]'
+											} ).done( function ( archived ) {
 												$( '.arcProg' ).append( '<div class="archiverPosted">' + mPosted + '</div>' );
 												new mw.Api().postWithToken( 'edit', {
 													action: 'edit',
@@ -236,10 +269,25 @@ $(document).ready( function () {
 													pageid: pageid,
 													text: '',
 													summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) archived [[Special:Diff/' + archived.edit.newrevid + '|' + sectionName + ']] to [[' + archiveName + '#' + sectionName + '|' + archiveName + ']]'
-												} ).done( function() {
+												} ).done( function () {
 													$( '.arcProg' ).append( '<div class="archiverCleared">' + mCleared + '</div>' );
-													$( '.arcProg' ).append( '<div>' + mReloading + '</div>' );
-													location.reload();
+													if ( archivePageSize >= maxArchiveSize && !errorLog.maxArchiveSize ) {
+														var mUpdated = '<span style="color: #080">Counter updated...</span>';
+														new mw.Api().postWithToken( 'edit', {
+															action: 'edit',
+															section: 0,
+															pageid: pageid,
+															text: content0.replace( oldCounter, newCounter ),
+															summary: '[[User:Equazcion/OneClickArchiver|OneClickArchiver]] ([[User:Technical_13/SandBox/OneClickArchiver.js|β]]) updating counter.'
+														} ).done( function () {
+															$( '.arcProg' ).append( '<div class="archiverPosted">' + mUpdated + '</div>' );
+															$( '.arcProg' ).append( '<div>' + mReloading + '</div>' );
+															location.reload();
+														} );
+													} else {
+														$( '.arcProg' ).append( '<div>' + mReloading + '</div>' );
+														location.reload();
+													}
 												} );
 											} );
 										}
@@ -294,3 +342,4 @@ $(document).ready( function () {
 		} );
 	}
 } );
+//</nowiki>
