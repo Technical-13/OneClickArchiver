@@ -191,7 +191,7 @@ $(document).ready( function () {
 									if ( dnauDate > Date.now() ) {
 										$( '.arcProg' ).remove();
 										$( '.overlay' ).remove();
-										var dnauAbortMsg = '<p>This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.<br /><br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Technical_13/Scripts/OneClickArchiver" title="User:Technical_13/Scripts/OneClickArchiver">the documentation</a> for details.</span></p>';
+										var dnauAbortMsg = '<p>This section has been marked \"Do Not Archive Until\" ' + dnau + ', so archiving was aborted.<br /><br /><span style="font-size: larger;">Please, see <a href="/wiki/User:Technical_13/1CA" title="User:Technical_13/1CA">the documentation</a> for details.</span></p>';
 										mw.notify( $( dnauAbortMsg ), { title: 'OneClickArchiver aborted!', tag: 'OCAdnau', autoHide: false } );
 									} else {
 										var contentSection = '\n\n{{Clear}}\n' + sectionContent;
@@ -203,7 +203,7 @@ $(document).ready( function () {
 											action: 'edit',
 											title: archiveName,
 											appendtext: contentSection,
-											summary: '[[User:Technical_13/Scripts/OneClickArchiver|OneClickArchiver]] adding [[' + archiveName + '#' + sectionName + '|' + sectionName + ']]'
+											summary: '[[User:Technical_13/1CA|OneClickArchive]] adding [[' + archiveName + '#' + sectionName + '|' + sectionName + ']]'
 										} ).done( function( archived ) {
 											$( '.arcProg' ).append( '<div class="archiverPosted">' + mPosted + '</div>' );
 											new mw.Api().postWithToken( 'edit', {
@@ -211,7 +211,7 @@ $(document).ready( function () {
 												section: sectionNumber,
 												pageid: pageid,
 												text: '',
-												summary: '[[User:Technical_13/Scripts/OneClickArchiver|OneClickArchiver]] archived [[Special:Diff/' + archived.edit.newrevid + '|' + sectionName + ']] to [[' + archiveName + '#' + sectionName + '|' + archiveName + ']]'
+												summary: '[[User:Technical_13/1CA|OneClickArchive]] archived [[Special:Diff/' + archived.edit.newrevid + '|' + sectionName + ']] to [[' + archiveName + '#' + sectionName + '|' + archiveName + ']]'
 											} ).done( function() {
 												$( '.arcProg' ).append( '<div class="archiverCleared">' + mCleared + '</div>' );
 												$( '.arcProg' ).append( '<div>' + mReloading + '</div>' );
